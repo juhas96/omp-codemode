@@ -16,6 +16,8 @@ The extension does not turn on disabled tools. OMP's Eval exposes host APIs and 
 
 OMP 19.1.1 can expose MCP servers as native Eval namespaces instead of sending each method as a direct tool or command. Method signatures are available on demand at `help://eval/<namespace>`. Calls through the namespace still use OMP's tool approvals. Built-in tools remain available directly.
 
+For one method, ask OMP to use `mcp_find` instead of reading the whole namespace manual. Example arguments: `{"query":"time zones update settings","server":"businesscentral_admin"}`. It returns one matching schema by default; use `limit` for up to three. The returned `name` is callable in Eval as `await tool[name](args)`. Discovery never calls the MCP server method. See the [Rex comparison](docs/pdd/mcp-find.md).
+
 ```sh
 omp config get mcp.evalNamespaces
 omp config set mcp.evalNamespaces true  # enable for new sessions
