@@ -1,0 +1,18 @@
+{
+  "name": "omp-codemode",
+  "version": "0.1.0",
+  "description": "Find the argument schema for one enabled MCP method in oh-my-pi.",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juhas96/omp-codemode.git"
+  },
+  "files": ["mcp-find.js"],
+  "omp": {
+    "extensions": ["./mcp-find.js"]
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
