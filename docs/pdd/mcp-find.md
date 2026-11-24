@@ -20,3 +20,10 @@ Scope: one `mcp_find` tool in the locally installed `omp-codemode` extension. OM
 - Observed discovery comparison: 22,573 → 276 tool-result bytes (−98.8%), and 29,618 → 24,100 total reported tokens (−18.6%, cached input included). The paired runs used a temporary overlay allowing complete help output and disabling Spotlight result shaping; the production configuration was not changed.
 
 Not promised: a fuzzy semantic retriever, full schema docs for oversized methods, permission discovery from MCP descriptions, or universal savings. Descriptions and schemas are server-controlled result data.
+
+## Automatic discovery
+
+- R4 / C4: For OMP `before_agent_start` events with reason `prompt`, add a rule to call `mcp_find` first for unknown MCP method names or arguments, skip lookup when both are known, and use full namespace help only as a fallback. Include the rule only with Code Mode on, native JavaScript Eval, `mcp_find`, and at least one enabled native MCP method. The prompt hook itself dispatches no tools.
+- T4: The previously approved OMP `before_agent_start` hook delivers prompt guidance and `getActiveTools()` lists the enabled names, including Eval-bound native MCP names. No new execution boundary.
+- C4 (tested): `CODEMODE_TEST_INSTALLED=1 node --test test/codemode.test.mjs` passed 8/8. The positive fixture asserts lookup, skip, and fallback rules and no prompt-time tool execution. The toggle, disabled finder, and empty-catalog cases suppress the rule; the existing tests also cover missing Eval and disabled JS. Removing the finder check in an isolated copy failed the disabled-finder assertion.
+- Real model sample (tested in Rex): asked for the registered Business Central time-zone method without naming a discovery tool. In a fresh local Splash/Qwen3.6 session, `mcp_find` was the only tool call and the response named `mcp__businesscentral_admin_get_time_zones_for_update_settings`. The method was not executed. Model compliance in other turns is not promised.

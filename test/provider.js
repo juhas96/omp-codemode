@@ -17,9 +17,10 @@ export default function testProvider(omp) {
     systemPrompt: [...event.systemPrompt, 'codemode-test-base-sentinel'],
   }));
   omp.registerCommand('hide-fixture-method', {
-    description: 'Disable the fixture method without removing its registry metadata',
-    async handler() {
-      await omp.setActiveTools(omp.getActiveTools().filter(name => name !== 'mcp__roster_hidden_lookup'));
+    description: 'Disable a fixture tool without removing its registry metadata',
+    async handler(args) {
+      const name = args.trim() || 'mcp__roster_hidden_lookup';
+      await omp.setActiveTools(omp.getActiveTools().filter(tool => tool !== name));
     },
   });
   omp.registerTool({
@@ -58,6 +59,7 @@ export default function testProvider(omp) {
         : request?.startsWith('fixture-call ') ? JSON.parse(request.slice('fixture-call '.length)) : undefined;
       const snapshot = {
         guided,
+        discoveryGuidance: system.split('\n').find(line => /call mcp_find first/i.test(line)) ?? null,
         keptBase: system.includes('codemode-test-base-sentinel'),
         tools: context.tools.map(tool => tool.name),
         enabled: omp.getActiveTools(),

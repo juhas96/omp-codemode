@@ -92,7 +92,7 @@ async function rpc(t, { installed = false, tools = 'eval,read,write', js = true,
       const { toolEvents } = await send('prompt', { message });
       const { text } = await send('get_last_assistant_text');
       assert.ok(text, `missing model response; native tool events: ${JSON.stringify(toolEvents)}`);
-      return JSON.parse(text);
+      return { ...JSON.parse(text), toolEvents };
     },
   };
 }
@@ -138,6 +138,36 @@ for (const [description, options, evalActive] of [
     assert.equal(snapshot.tools.includes('eval'), evalActive);
   });
 }
+
+test('automatic MCP discovery follows live tool enablement and the Code Mode toggle', { timeout }, async t => {
+  const host = await rpc(t, { mcp: true, tools: 'eval,read,mcp_find' });
+  const before = await host.turn('Identify the update-window time zone method.');
+  assert.ok(before.enabled.includes('mcp__roster_list_time_zones'));
+  assert.ok(before.tools.includes('mcp_find'));
+  assert.match(before.discoveryGuidance, /method name or its arguments are unknown, call mcp_find first/i);
+  assert.match(before.discoveryGuidance, /skip discovery when both are known/i);
+  assert.match(before.discoveryGuidance, /full namespace help only if focused discovery/i);
+  assert.deepEqual(before.toolEvents, []);
+
+  await host.command('/codemode off');
+  assert.equal((await host.turn()).discoveryGuidance, null);
+  await host.command('/codemode on');
+  assert.equal((await host.turn()).discoveryGuidance, before.discoveryGuidance);
+
+  await host.command('/hide-fixture-method mcp_find');
+  const disabled = await host.turn();
+  assert.ok(disabled.enabled.includes('mcp__roster_list_time_zones'));
+  assert.ok(!disabled.enabled.includes('mcp_find'));
+  assert.equal(disabled.discoveryGuidance, null);
+  await assert.rejects(access(join(host.cwd, 'mcp-calls.jsonl')), { code: 'ENOENT' });
+});
+
+test('automatic MCP discovery adds no guidance when no MCP methods are enabled', { timeout }, async t => {
+  const host = await rpc(t, { tools: 'eval,read,mcp_find' });
+  const snapshot = await host.turn();
+  assert.ok(snapshot.guided && snapshot.tools.includes('mcp_find'));
+  assert.equal(snapshot.discoveryGuidance, null);
+});
 
 test('MCP discovery returns only matching enabled signatures without calling the server', { timeout }, async t => {
   const host = await rpc(t, { mcp: true, tools: 'eval,read,mcp_find,time_zone_local_fixture' });
