@@ -68,12 +68,12 @@ function describeMethod(tool) {
     : { ...hit, schemaOmitted: 'Argument schema too large. Use native help://eval/<namespace> for the full signature.' };
 }
 
-export function registerMcpFind(omp) {
+export default function mcpFind(omp) {
   const z = omp.zod;
   omp.registerTool({
     name: 'mcp_find',
     label: 'MCP Find',
-    description: 'Find enabled MCP methods and their argument schemas before opening full namespace help. In native Eval use await tool[name](args) with the returned name.',
+    description: 'Find enabled MCP methods and their argument schemas. If the method or arguments are unknown, try one focused lookup with task keywords and the server if known. If the result is unusable, read help://eval/<namespace> instead of searching again. Skip lookup when the signature is known. In native Eval, call the returned name with await tool[name](args).',
     loadMode: 'essential',
     approval: 'read',
     parameters: z.object({

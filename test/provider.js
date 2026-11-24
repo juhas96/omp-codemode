@@ -1,26 +1,10 @@
 import { AssistantMessageEventStream } from '@oh-my-pi/pi-ai';
 
-const exercise = `
-const reads = await Promise.all(['a.txt', 'b.txt'].map(path =>
-  tool.read({ path, i: 'Reading test fixture' })));
-const lengths = reads.map(result => (typeof result === 'string' ? result : result.text).length);
-try {
-  await tool.write({ path: 'blocked.txt', content: 'should not exist', i: 'Checking denied test write' });
-  print(JSON.stringify({ lengths, denied: false }));
-} catch (error) {
-  print(JSON.stringify({ lengths, denied: /blocked by user policy/.test(error.message) }));
-}
-`;
-
 export default function testProvider(omp) {
-  omp.on('before_agent_start', event => ({
-    systemPrompt: [...event.systemPrompt, 'codemode-test-base-sentinel'],
-  }));
   omp.registerCommand('hide-fixture-method', {
     description: 'Disable a fixture tool without removing its registry metadata',
-    async handler(args) {
-      const name = args.trim() || 'mcp__roster_hidden_lookup';
-      await omp.setActiveTools(omp.getActiveTools().filter(tool => tool !== name));
+    async handler() {
+      await omp.setActiveTools(omp.getActiveTools().filter(name => name !== 'mcp__roster_hidden_lookup'));
     },
   });
   omp.registerTool({
@@ -46,26 +30,17 @@ export default function testProvider(omp) {
         if (message.role !== 'user') return false;
         const texts = typeof message.content === 'string' ? [message.content]
           : message.content.filter(block => block.type === 'text').map(block => block.text);
-        request = texts.find(text => text === 'exercise' || text.startsWith('fixture-call '));
+        request = texts.find(text => text.startsWith('fixture-call '));
         return request !== undefined;
       });
-      const exerciseRequested = request === 'exercise';
       const result = requestIndex === -1 ? undefined : context.messages.slice(requestIndex + 1)
         .findLast(message => message.role === 'toolResult')?.content;
-      const system = String(context.systemPrompt);
-      const guided = system.includes('## Code Mode') && system.includes('await tool.<name>(args)');
-      const toolCall = result ? undefined : exerciseRequested && guided
-        ? { name: 'eval', arguments: { language: 'js', code: exercise } }
-        : request?.startsWith('fixture-call ') ? JSON.parse(request.slice('fixture-call '.length)) : undefined;
+      const toolCall = request && !result ? JSON.parse(request.slice('fixture-call '.length)) : undefined;
       const snapshot = {
-        guided,
-        discoveryGuidance: system.split('\n').find(line => /call mcp_find first/i.test(line)) ?? null,
-        keptBase: system.includes('codemode-test-base-sentinel'),
+        hasGenericGuidance: String(context.systemPrompt).includes('## Code Mode'),
+        finderDescription: context.tools.find(tool => tool.name === 'mcp_find')?.description,
         tools: context.tools.map(tool => tool.name),
         enabled: omp.getActiveTools(),
-        transcript: exerciseRequested
-          ? JSON.stringify(context.messages.map(({ role, content }) => ({ role, content })))
-          : undefined,
         result,
       };
       const stopReason = toolCall ? 'toolUse' : 'stop';
