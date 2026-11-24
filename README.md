@@ -12,6 +12,18 @@ Start OMP normally. Try: **Use Code Mode to read `README.md` and `codemode.js` i
 
 The extension does not turn on disabled tools. OMP's Eval exposes host APIs and is not Pi's QuickJS sandbox. Code Mode changes the model's guidance, not the runtime's permissions or output retention.
 
+## MCP Code Mode
+
+OMP 19.1.1 can expose MCP servers as native Eval namespaces instead of sending each method as a direct tool or command. Method signatures are available on demand at `help://eval/<namespace>`. Calls through the namespace still use OMP's tool approvals. Built-in tools remain available directly.
+
+```sh
+omp config get mcp.evalNamespaces
+omp config set mcp.evalNamespaces true  # enable for new sessions
+omp config reset mcp.evalNamespaces    # restore the default (false)
+```
+
+`/codemode off` turns off this extension's guidance, not OMP's native MCP namespaces. See the [MCP verification and token measurements](docs/pdd/mcp-namespaces.md).
+
 ## Local install and checks
 
 From this directory, link the entry point and start a new OMP process:
