@@ -18,6 +18,19 @@ Start a fresh OMP session. Tested with OMP 19.1.1. If you previously installed t
 
 Ask an MCP question normally. For an unknown method or signature, the tool description tells the model to try one focused lookup, then fall back to `help://eval/<namespace>` if needed. If it already knows the signature, it can call the method directly. A returned name works in native Eval as `await tool[name](args)` under OMP's normal approvals.
 
+## Measured token savings
+
+Real Business Central MCP lookups in fresh Rex sessions, using OMP 19.1.1 and local Qwen3.6-35B-A3B. Both discovery routes found the correct method. No MCP method had to be executed for discovery.
+
+| Time-zone method lookup | Full namespace help | `mcp_find` | Reduction |
+| --- | ---: | ---: | ---: |
+| Total model tokens (including cached input) | 29,618 | 24,100 | 18.6% |
+| Tool result size | 22,573 bytes | 276 bytes | 98.8% |
+
+Retries can erase the savings. In separate runs, the app-updates lookup took 54,070 tokens with three searches and a fallback, versus 23,901 with one lookup in the current finder-only setup. These are individual runs, not a guaranteed reduction.
+
+Separately, enabling OMP's native MCP namespaces reduced first-request input from 14,925 to 12,716 tokens (14.8%) in a live Business Central test. That saving comes from OMP's setting, not this extension.
+
 ## Native MCP namespaces
 
 This separate OMP setting keeps MCP method schemas out of the upfront tool list. The extension does not change it or replace native Eval. See the [namespace verification](https://github.com/juhas96/omp-codemode/blob/main/docs/pdd/mcp-namespaces.md) and the [finder measurements](https://github.com/juhas96/omp-codemode/blob/main/docs/pdd/mcp-find.md).
