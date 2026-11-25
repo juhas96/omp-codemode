@@ -17,3 +17,9 @@ No changes to the installed local symlink, MCP configuration, approvals, or nati
 - `gitleaks git --redact=100 --no-banner .` found no leaks in the seven original commits. The remote had only `main`, no releases, issues, Actions runs or artifacts, and no wiki.
 - `npm pack --json` produced exactly `README.md`, `mcp-find.js`, and `package.json`. The runtime matched `af6627c` byte for byte. The manifest has no dependencies or scripts. Pack integrity: `sha512-3heMyzXUvaXIe7wZoRLMKsGHtawFObr6E7+oU7M6ehruAQSmUYNifIrtU3OyoFN7dKaQuRS7Wq175Lx/gIMHUg==`.
 - OMP 19.1.1 linked the unpacked artifact and a fresh isolated process invoked `mcp_find`, returning `{"matches":[]}` with an empty MCP catalog. A mutant manifest pointing at an absent file failed with unknown `mcp_find`.
+
+## Publication receipt
+
+- C1 (tested at `bf10f2d486`): GitHub reports `juhas96/omp-codemode` public. Anonymous Git read `main`, and `omp plugin install github:juhas96/omp-codemode` installed `0.1.0` in a fresh profile and exposed a callable `mcp_find`.
+- C2 (tested at `bf10f2d486`): after browser approval, anonymous npm metadata reported `latest: 0.1.0` with the exact verified tarball integrity above.
+- C3 (tested on OMP 19.1.1): `omp plugin install omp-codemode@0.1.0` in a disposable unauthenticated profile installed the registry package. A fresh process invoked `mcp_find` without explicitly loading the finder and received `{"matches":[]}` for the empty catalog. This verifies loading and invocation; the existing synthetic MCP test covers successful matches.
